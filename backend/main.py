@@ -1,0 +1,3 @@
+@app.post("/api/v1/logs")
+async def ingest_log(request: Request, x_client_id: str = Header(...)):
+    ...

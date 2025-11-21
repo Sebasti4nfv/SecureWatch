@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securewatch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: securewatch
+  template:
+    metadata:
+      labels:
+        app: securewatch
+    spec:
+      containers:
+      - name: securewatch
+        image: ghcr.io/usuario/securewatch:latest
+        ports:
+        - containerPort: 8000
