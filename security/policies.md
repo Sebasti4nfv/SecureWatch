@@ -1,0 +1,6 @@
+- Ejecutar contenedores como usuario no root.
+- Limitar acceso de red entre microservicios (NetworkPolicies).
+- Usar imágenes base oficiales y “slim”.
+- Definir límites de recursos (CPU/Mem).
+- Activar liveness y readiness probes.
+- Aplicar RBAC para restringir permisos.
