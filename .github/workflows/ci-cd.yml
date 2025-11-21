@@ -1,0 +1,78 @@
+name: securewatch-ci-cd
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+
+      # Pruebas ligadas a historias de usuario
+      - name: Test H.U 1 – Ingesta de Logs
+        run: pytest tests/test_ingesta.py
+
+      - name: Test H.U 2 – Detección Automática
+        run: pytest tests/test_correlacion.py
+
+      - name: Test H.U 3 – Panel del Cliente
+        run: pytest tests/test_incidentes_api.py
+
+      - name: Test H.U 4 – Búsqueda en Elasticsearch
+        run: pytest tests/test_elasticsearch.py
+
+      - name: Test H.U 5 – Alertas
+        run: pytest tests/test_alertas.py
+
+      - name: Static Code Analysis
+        run: |
+          pip install flake8
+          flake8 backend/
+
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/securewatch:latest
+
+  deploy-staging:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure kubectl
+        run: |
+          mkdir ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" > ~/.kube/config
+
+      - name: Deploy to Kubernetes (Staging)
+        run: |
+          kubectl set image deployment/securewatch \
+          securewatch=ghcr.io/${{ github.repository }}/securewatch:latest \
+          -n staging
