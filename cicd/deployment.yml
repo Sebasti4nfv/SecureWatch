@@ -17,3 +17,4 @@ spec:
         image: ghcr.io/usuario/securewatch:latest
         ports:
         - containerPort: 8000
+
